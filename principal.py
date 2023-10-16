@@ -5,7 +5,7 @@ apiKey = "64e9a5cb1b1f41daa6a4b3a8c572d2dc"
 urlBase = "https://api.spoonacular.com/recipes"  #Esta en principio es la url base que voy a utilizar
 
 
-#-------Función para limpiar la terminal antes de la ejecución del menú. Fuente de información: https://stackoverflow.com/questions/2084508/clear-terminal-in-python
+#Función para limpiar la terminal antes de la ejecución del menú. Fuente de información: https://stackoverflow.com/questions/2084508/clear-terminal-in-python
 
 def limpiar_pantalla():
     if os.name == 'nt':     #Para windows
@@ -102,6 +102,34 @@ def obtenerIngredientesReceta():
                 print("No se encontraron ingredientes para esta receta.")
         else:
             print("Hubo un problema al obtener los ingredientes.")
+
+
+#Función auxiliar. Devuelve id y nombre de una receta
+
+def obtenerIdYNombreReceta():
+    nombreReceta = input("¿Cuál es la receta? \n")
+
+    parametros = {
+        "apiKey": apiKey,
+        "number": 1,
+        "query": nombreReceta
+    }
+
+    respuesta = requests.get(urlBase + "/autocomplete", params=parametros)      #LA API DEVUELVE UNA LISTA DE RECETAS AUTOCOMPLETADAS A PARTIR DE LA BÚSQUEDA
+
+    if respuesta.status_code == 200:    #Control de respuesta
+        recetas = respuesta.json()
+
+        if recetas and len(recetas) > 0:    #Devuelve una lista de recetas. Miramos si está vacía
+            idReceta = recetas[0]['id']     #Solo quiero que me devuelva el id y el nombre de la primera de la lista
+            tituloReceta = recetas[0]['title']
+            return idReceta, tituloReceta
+        else:
+            print("No se pudo encontrar esa receta.")
+            return None, None   #Tuve problemas con el control de errores, y era porque no puse que devolviera None, None.
+    else:
+        print("Hubo un problema al buscar la receta.")
+        return None, None
    
 menu()
 
