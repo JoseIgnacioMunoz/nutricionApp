@@ -2,7 +2,7 @@ import requests #Importamos la biblioteca requests para hacer solicitudes a la A
 import json
 import os
 apiKey = "64e9a5cb1b1f41daa6a4b3a8c572d2dc"
-urlInicial = "https://api.spoonacular.com/recipes"  #Esta en principio es la url base que voy a utilizar
+urlBase = "https://api.spoonacular.com/recipes"  #Esta en principio es la url base que voy a utilizar
 
 
 #-------Función para limpiar la terminal antes de la ejecución del menú. Fuente de información: https://stackoverflow.com/questions/2084508/clear-terminal-in-python
@@ -32,10 +32,10 @@ def menu():
 
         if opcion == "1":
             recetasPorIngredientes()
-        #elif opcion == "2":
-           # obtenerNutrientesDeReceta()
+        elif opcion == "2":
+            obtenerIngredientesReceta()
         #elif opcion == "3":
-            # mostrarRiesgosYBeneficios()
+            # obtenerNutrientesReceta()
         #elif opcion == "4":
             #recetaAleatoria()
         elif opcion == "5":
@@ -44,9 +44,10 @@ def menu():
         else:
             print("Opción no válida. Por favor, elige una opción del 1 al 5.")
 
+
+#------1º Búsqueda de recetas que contengan ciertos ingredientes.
 def recetasPorIngredientes():
 
-    
     ingredientes = input("Ingresa los ingredientes separados por comas: ")
     numRecetas = input("Número de recetas a obtener: ")
 
@@ -56,7 +57,7 @@ def recetasPorIngredientes():
             "number": numRecetas     # Cantidad de recetas a obtener
     }
 
-    respuesta = requests.get(urlInicial + "/findByIngredients", params=parametros)    #Se usará para control de respuesta de la API
+    respuesta = requests.get(urlBase + "/findByIngredients", params=parametros)    #Se usará para control de respuesta de la API
 
     if respuesta.status_code == 200:    #Aquí vemos si devuelve 200 OK con el status_code
             recetas = respuesta.json()      # Respuesta de formato json a objeto Python
@@ -75,6 +76,33 @@ def recetasPorIngredientes():
             print("No se pudieron buscar recetas. Lo lamentamos!", respuesta.status_code)   #Códigos de error. Puede ser por la cuota de la API o porque no haya conexion.
 
 
+#------2º Devuelve los ingredientes que se usan en una receta.
+def obtenerIngredientesReceta():
+
+    idReceta, nombreReceta= None #Crearemos obtenerIdYNombreReceta() para completar esta función
+
+    if idReceta:
+        parametros = {
+            "apiKey": apiKey,
+        }
+
+        url = f"{urlBase}/{idReceta}/ingredientWidget.json" #Proporciona ingredientes por ID de receta, por eso se crea obtenerIdYNombreReceta()
+        respuesta = requests.get(url, params=parametros)
+
+        if respuesta.status_code == 200:
+            ingredientes = respuesta.json()
+
+            if "ingredients" in ingredientes:
+                print(f"\nIngredientes de {nombreReceta}:")     #Si busco "fish and" se autocompletará como "fish and chips". Pongo el nombreReceta para controlar el autocompletado
+                for ingrediente in ingredientes["ingredients"]: #Recorrido de ingredientes
+                    nombre = ingrediente['name']                #Ejemplo: garlic
+                    cantidad = ingrediente['amount']['metric']  #Cantidad y su métrica
+                    print(f"{nombre} = {cantidad['value']} {cantidad['unit']}") #Valor de la cantidad y unidad métrica
+            else:
+                print("No se encontraron ingredientes para esta receta.")
+        else:
+            print("Hubo un problema al obtener los ingredientes.")
+   
 menu()
 
 
