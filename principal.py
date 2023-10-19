@@ -23,8 +23,8 @@ def menu():
         print("-------------------------------------------------")
         print("\nMenú:\n")
         print("1. Búsqueda de recetas por ingredientes.")
-        print("2. Obtener nutrientes de una receta.")
-        print("3. Mostrar riesgos y beneficios de una receta.")
+        print("2. Obtener ingredientes de una receta.")
+        print("3. Obtener nutrientes de una receta")
         print("4. Receta aleatoria (desayuno/almuerzo/cena).")
         print("5. Salir")
         opcion = input("\nElige una opción: ")
@@ -33,9 +33,9 @@ def menu():
         if opcion == "1":
             recetasPorIngredientes()
         elif opcion == "2":
-            obtenerIngredientesReceta()
-        #elif opcion == "3":
-            # obtenerNutrientesReceta()
+            mostrarIngredientesReceta()
+        elif opcion == "3":
+            mostrarNutrientesReceta()
         #elif opcion == "4":
             #recetaAleatoria()
         elif opcion == "5":
@@ -77,9 +77,9 @@ def recetasPorIngredientes():
 
 
 #------2º Devuelve los ingredientes que se usan en una receta.
-def obtenerIngredientesReceta():
+def mostrarIngredientesReceta():
 
-    idReceta, nombreReceta= None #Crearemos obtenerIdYNombreReceta() para completar esta función
+    idReceta, nombreReceta= obtenerIdYNombreReceta() # Almacenamiento de lo devuelto en dicha función
 
     if idReceta:
         parametros = {
@@ -102,6 +102,63 @@ def obtenerIngredientesReceta():
                 print("No se encontraron ingredientes para esta receta.")
         else:
             print("Hubo un problema al obtener los ingredientes.")
+
+#------3º Devuelve los nutrientes de una receta.
+
+def mostrarNutrientesReceta():    #se usará para la opcion 2 del menu. (Obtener nutrientes de una receta mediante el id que devuelve la funcion de la api de autocompletar recetas)
+
+    idReceta, nombreReceta= obtenerIdYNombreReceta() # Almacenamiento de lo devuelto en dicha función
+
+    url = f"https://api.spoonacular.com/recipes/{idReceta}/nutritionWidget.json"
+    parametros = {
+        "apiKey": apiKey,
+    }
+
+    respuesta = requests.get(url, params=parametros)
+
+    if respuesta.status_code == 200:
+            infoNutricional = respuesta.json()
+            print(f"Información Nutricional de {nombreReceta}: \n")
+
+            # Creación e inicialización de las variables que contendrán información nutricional:
+            calorias = infoNutricional.get('calories', 'Información no disponible')
+            grGrasa = infoNutricional.get('fat', 'Información no disponible')
+            hidratos = infoNutricional.get('carbs', 'Información no disponible') #Hidratos de carbono 
+            grProteina = infoNutricional.get('protein', 'Información no disponible')
+
+            for nutriente in infoNutricional.get('bad'):    # Grasas saturadas está anidado a la lista de elementos "bad", por eso la recorremos y buscamos el título "Satured Fat"
+                if nutriente.get('title') == 'Saturated Fat':
+                    grGrasaSaturada = nutriente.get('amount', 'Información no disponible')
+                    break   # No queda más remedio que utilizar el break para que no recorra toda la lista
+            
+            for nutriente in infoNutricional.get('bad'):    # Lo mismo de las grasas saturadas lo hacemos con el azúcar.
+                if nutriente.get('title') == 'Sugar':
+                    azucar = nutriente.get('amount', 'Información no disponible')
+                    break
+
+            for nutriente in infoNutricional.get('bad'):    # Lo mismo de las grasas saturadas lo hacemos con el sodio.
+                if nutriente.get('title') == 'Sodium':
+                    sodio = nutriente.get('amount', 'Información no disponible')
+                    break
+
+            for nutriente in infoNutricional.get('good'):   # Lo mismo, pero esta vez, "fibra", está en la lista "good"
+                if nutriente.get('title') == 'Fiber':
+                    fibra = nutriente.get('amount', 'Información nutricional no disponible')
+                    break
+
+            #Mostramos los nutrientes
+
+            print("Calorías:", calorias, "kcal")
+            print("Grasas totales:", grGrasa)
+            print("Grasas saturadas:", grGrasaSaturada)
+            print("Hidratos de carbono:", hidratos)
+            print("Azúcar:", azucar)
+            print("Proteína:", grProteina)
+            print("Fibra:", fibra)
+            print("Sodio:", sodio)
+            
+    else:
+        print("No se pudo encontrar información nutricional de esa receta.")
 
 
 #Función auxiliar. Devuelve id y nombre de una receta
@@ -130,7 +187,7 @@ def obtenerIdYNombreReceta():
     else:
         print("Hubo un problema al buscar la receta.")
         return None, None
-   
+       
 menu()
 
 
