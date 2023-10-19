@@ -3,6 +3,8 @@ import json
 import os
 apiKey = "64e9a5cb1b1f41daa6a4b3a8c572d2dc"
 urlBase = "https://api.spoonacular.com/recipes"  #Esta en principio es la url base que voy a utilizar
+OK200 = 200
+UMBRAL50 = 50
 
 
 #Función para limpiar la terminal antes de la ejecución del menú. Fuente de información: https://stackoverflow.com/questions/2084508/clear-terminal-in-python
@@ -17,6 +19,7 @@ limpiar_pantalla()
 
 #--------Función menú---------
 def menu():
+
     salir=False
     while salir==False:
         
@@ -25,8 +28,7 @@ def menu():
         print("1. Búsqueda de recetas por ingredientes.")
         print("2. Obtener ingredientes de una receta.")
         print("3. Obtener nutrientes de una receta")
-        print("4. Receta aleatoria (desayuno/almuerzo/cena).")
-        print("5. Salir")
+        print("4. Salir")
         opcion = input("\nElige una opción: ")
         print("\n-------------------------------------------------")
 
@@ -36,13 +38,11 @@ def menu():
             mostrarIngredientesReceta()
         elif opcion == "3":
             mostrarNutrientesReceta()
-        #elif opcion == "4":
-            #recetaAleatoria()
-        elif opcion == "5":
+        elif opcion == "4":
             print("¡Hasta luego!")
             salir=True
         else:
-            print("Opción no válida. Por favor, elige una opción del 1 al 5.")
+            print("Opción no válida. Por favor, elige una opción del 1 al 4.")
 
 
 #------1º Búsqueda de recetas que contengan ciertos ingredientes.
@@ -51,6 +51,7 @@ def recetasPorIngredientes():
     ingredientes = input("Ingresa los ingredientes separados por comas: ")
     numRecetas = input("Número de recetas a obtener: ")
 
+    # Parámetros para la url
     parametros = {      #Variable que guardará el diccionario de parámetros a pasar al método requests.get
             "apiKey": apiKey,
             "ingredients":  ingredientes,  # Ingredientes (la API espera que estén separados por comas)
@@ -59,7 +60,7 @@ def recetasPorIngredientes():
 
     respuesta = requests.get(urlBase + "/findByIngredients", params=parametros)    #Se usará para control de respuesta de la API
 
-    if respuesta.status_code == 200:    #Aquí vemos si devuelve 200 OK con el status_code
+    if respuesta.status_code == OK200:    #Aquí vemos si devuelve 200 OK con el status_code
             recetas = respuesta.json()      # Respuesta de formato json a objeto Python
             if recetas:
                 print("\nYuju! Parece que hay recetas para ti!\n")
@@ -82,6 +83,7 @@ def mostrarIngredientesReceta():
     idReceta, nombreReceta= obtenerIdYNombreReceta() # Almacenamiento de lo devuelto en dicha función
 
     if idReceta:
+        # Parámetros a pasar en la url
         parametros = {
             "apiKey": apiKey,
         }
@@ -89,7 +91,7 @@ def mostrarIngredientesReceta():
         url = f"{urlBase}/{idReceta}/ingredientWidget.json" #Proporciona ingredientes por ID de receta, por eso se crea obtenerIdYNombreReceta()
         respuesta = requests.get(url, params=parametros)
 
-        if respuesta.status_code == 200:
+        if respuesta.status_code == OK200:
             ingredientes = respuesta.json()
 
             if "ingredients" in ingredientes:
@@ -110,13 +112,15 @@ def mostrarNutrientesReceta():    #se usará para la opcion 2 del menu. (Obtener
     idReceta, nombreReceta= obtenerIdYNombreReceta() # Almacenamiento de lo devuelto en dicha función
 
     url = f"https://api.spoonacular.com/recipes/{idReceta}/nutritionWidget.json"
+
     parametros = {
         "apiKey": apiKey,
     }
 
     respuesta = requests.get(url, params=parametros)
 
-    if respuesta.status_code == 200:
+    if respuesta.status_code == OK200:
+            
             infoNutricional = respuesta.json()
             print(f"Información Nutricional de {nombreReceta}: \n")
 
@@ -158,14 +162,37 @@ def mostrarNutrientesReceta():    #se usará para la opcion 2 del menu. (Obtener
             print("Sodio:", sodio)
             
     else:
-        print("No se pudo encontrar información nutricional de esa receta.")
+        print("Lo intentamos pero no pudimos encontrar la información de esa receta :(")
 
+    mostrarBeneficios(infoNutricional)
+    mostrarRiesgos(infoNutricional)
+
+def mostrarBeneficios(infoNutricional):     # Beneficios de la receta
+    
+    nutrientesBuenos = infoNutricional.get('nutrients', [])
+
+    for nutriente in infoNutricional.get('good'):   # Buscamos en la lista de nutrientes favorables
+        nombre = nutriente.get('title', 'Información no disponible')
+        porcentajeDiario = nutriente.get('percentOfDailyNeeds', 'Información no disponible')
+        if porcentajeDiario > UMBRAL50:
+            print(f"Esta receta es rica en {nombre} ({porcentajeDiario}% de necesidades diarias).")
+
+def mostrarRiesgos(infoNutricional):        # Riesgos de la receta
+
+    nutrientesMalos = infoNutricional.get('nutrients', [])  
+
+    for nutriente in infoNutricional.get('bad'):    # Buscamos en la lista de nutrientes desfavorables
+        nombre = nutriente.get('title', 'Información no disponible')
+        porcentajeDiario = nutriente.get('percentOfDailyNeeds', 'Información no disponible')
+        if porcentajeDiario > UMBRAL50:
+            print(f"Avertencia: esta receta tiene un {porcentajeDiario}% de necesidades diarias de {nombre}.")
 
 #Función auxiliar. Devuelve id y nombre de una receta
 
 def obtenerIdYNombreReceta():
     nombreReceta = input("¿Cuál es la receta? \n")
 
+    # Parametros a pasar en la url
     parametros = {
         "apiKey": apiKey,
         "number": 1,
@@ -174,7 +201,7 @@ def obtenerIdYNombreReceta():
 
     respuesta = requests.get(urlBase + "/autocomplete", params=parametros)      #LA API DEVUELVE UNA LISTA DE RECETAS AUTOCOMPLETADAS A PARTIR DE LA BÚSQUEDA
 
-    if respuesta.status_code == 200:    #Control de respuesta
+    if respuesta.status_code == OK200:    #Control de respuesta
         recetas = respuesta.json()
 
         if recetas and len(recetas) > 0:    #Devuelve una lista de recetas. Miramos si está vacía
@@ -182,7 +209,7 @@ def obtenerIdYNombreReceta():
             tituloReceta = recetas[0]['title']
             return idReceta, tituloReceta
         else:
-            print("No se pudo encontrar esa receta.")
+            print("Lo intentamos pero no pudimos encontrar esa receta :( ")
             return None, None   #Tuve problemas con el control de errores, y era porque no puse que devolviera None, None.
     else:
         print("Hubo un problema al buscar la receta.")
