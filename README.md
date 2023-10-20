@@ -38,7 +38,9 @@ Si tienes docker y deseas ejecutar la aplicación en un contenedor, estás de su
 
 Si estás en Windows, considera ejecutar el **símbolo del sistema como administrador**.
 
-Ayuda para instalar docker: https://docs.docker.com/engine/install/
+Nota: tienes el archivo **Dockerfile** que se ha usado a tu entera disposición en el repositorio.
+
+Guía para instalar docker: https://docs.docker.com/engine/install/
 
 ## **Términos y licencia de Spoonacular API**
 
