@@ -1,7 +1,7 @@
 # nutricionApp
 
 
-Bienvenido aventurero! A lo largo de este archivo podrás descubrir el funcionamiento, la ejecución y las carácterísticas de mi app de nutrición (;
+Bienvenido/a! A lo largo de este archivo podrás descubrir el funcionamiento, la ejecución y las carácterísticas de mi app de nutrición (;
 
 NutricionApp es una aplicación de línea de comandos que te permite buscar recetas, obtener información nutricional e ingredientes de recetas, y explorar sus beneficios y riesgos nutricionales. Esta aplicación está abastecida por una gran base de datos nutricionales de la mano de la API web de Spoonacular (https://spoonacular.com/food-api).
 
